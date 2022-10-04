@@ -20,4 +20,6 @@ model User {
   otp_hex      String?
   otp_base32   String?
   otp_auth_url String?
+
+  @@map(name: "users")
 }

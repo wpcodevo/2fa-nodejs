@@ -19,7 +19,7 @@ async function main() {
   app.use(express.json());
 
   //   Health Checker
-  app.get("/api/healthchecker", (res: Response) => {
+  app.get("/api/healthchecker", (req: Request, res: Response) => {
     res.status(200).json({
       status: "success",
       message: "Welcome to Two-Factor Authentication with Node.js",
