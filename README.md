@@ -34,3 +34,10 @@ The one-time passcode (OTP) can be delivered via different methods like SMS but 
 
 
 Read the entire article here: [https://codevoweb.com/two-factor-authentication-2fa-in-nodejs](https://codevoweb.com/two-factor-authentication-2fa-in-nodejs)
+
+Related articles:
+
+1. [How to Implement Two-factor Authentication (2FA) in React.js](https://codevoweb.com/two-factor-authentication-2fa-in-reactjs)
+2. [Two-factor Authentication (2FA) in FastAPI and Python](https://codevoweb.com/two-factor-authentication-2fa-in-fastapi-and-python)
+3. [How to Implement (2FA) Two-factor Authentication in Golang](https://codevoweb.com/two-factor-authentication-2fa-in-golang)
+
