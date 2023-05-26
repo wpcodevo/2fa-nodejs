@@ -2,7 +2,8 @@ import crypto from "crypto";
 import { Prisma } from "@prisma/client";
 import { Request, Response, NextFunction } from "express";
 import { prisma } from "../server";
-import speakeasy from "speakeasy";
+import * as OTPAuth from "otpauth";
+import { encode } from "hi-base32";
 
 const RegisterUser = async (
   req: Request,
@@ -70,27 +71,48 @@ const LoginUser = async (req: Request, res: Response, next: NextFunction) => {
   }
 };
 
+const generateRandomBase32 = () => {
+  const buffer = crypto.randomBytes(15);
+  const base32 = encode(buffer).replace(/=/g, "").substring(0, 24);
+  return base32;
+};
+
 const GenerateOTP = async (req: Request, res: Response) => {
   try {
     const { user_id } = req.body;
-    const { ascii, hex, base32, otpauth_url } = speakeasy.generateSecret({
+
+    const user = await prisma.user.findUnique({ where: { id: user_id } });
+
+    if (!user) {
+      return res.status(404).json({
+        status: "fail",
+        message: "No user with that email exists",
+      });
+    }
+
+    const base32_secret = generateRandomBase32();
+
+    let totp = new OTPAuth.TOTP({
       issuer: "codevoweb.com",
-      name: "admin@admin.com",
-      length: 15,
+      label: "CodevoWeb",
+      algorithm: "SHA1",
+      digits: 6,
+      period: 15,
+      secret: base32_secret,
     });
+
+    let otpauth_url = totp.toString();
 
     await prisma.user.update({
       where: { id: user_id },
       data: {
-        otp_ascii: ascii,
         otp_auth_url: otpauth_url,
-        otp_base32: base32,
-        otp_hex: hex,
+        otp_base32: base32_secret,
       },
     });
 
     res.status(200).json({
-      base32,
+      base32: base32_secret,
       otpauth_url,
     });
   } catch (error) {
@@ -114,13 +136,18 @@ const VerifyOTP = async (req: Request, res: Response) => {
       });
     }
 
-    const verified = speakeasy.totp.verify({
+    let totp = new OTPAuth.TOTP({
+      issuer: "codevoweb.com",
+      label: "CodevoWeb",
+      algorithm: "SHA1",
+      digits: 6,
+      period: 15,
       secret: user.otp_base32!,
-      encoding: "base32",
-      token,
     });
 
-    if (!verified) {
+    let delta = totp.validate({ token });
+
+    if (delta === null) {
       return res.status(401).json({
         status: "fail",
         message,
@@ -164,15 +191,18 @@ const ValidateOTP = async (req: Request, res: Response) => {
         message,
       });
     }
-
-    const validToken = speakeasy.totp.verify({
-      secret: user?.otp_base32!,
-      encoding: "base32",
-      token,
-      window: 1,
+    let totp = new OTPAuth.TOTP({
+      issuer: "codevoweb.com",
+      label: "CodevoWeb",
+      algorithm: "SHA1",
+      digits: 6,
+      period: 15,
+      secret: user.otp_base32!,
     });
 
-    if (!validToken) {
+    let delta = totp.validate({ token, window: 1 });
+
+    if (delta === null) {
       return res.status(401).json({
         status: "fail",
         message,
