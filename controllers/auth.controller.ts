@@ -97,7 +97,6 @@ const GenerateOTP = async (req: Request, res: Response) => {
       label: "CodevoWeb",
       algorithm: "SHA1",
       digits: 6,
-      period: 15,
       secret: base32_secret,
     });
 
@@ -127,8 +126,8 @@ const VerifyOTP = async (req: Request, res: Response) => {
   try {
     const { user_id, token } = req.body;
 
-    const user = await prisma.user.findUnique({ where: { id: user_id } });
     const message = "Token is invalid or user doesn't exist";
+    const user = await prisma.user.findUnique({ where: { id: user_id } });
     if (!user) {
       return res.status(401).json({
         status: "fail",
@@ -141,7 +140,6 @@ const VerifyOTP = async (req: Request, res: Response) => {
       label: "CodevoWeb",
       algorithm: "SHA1",
       digits: 6,
-      period: 15,
       secret: user.otp_base32!,
     });
 
@@ -196,7 +194,6 @@ const ValidateOTP = async (req: Request, res: Response) => {
       label: "CodevoWeb",
       algorithm: "SHA1",
       digits: 6,
-      period: 15,
       secret: user.otp_base32!,
     });
 
